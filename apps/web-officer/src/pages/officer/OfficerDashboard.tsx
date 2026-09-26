@@ -9,8 +9,10 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   FileText, Users, ShieldCheck, Clock, ArrowRight,
-  CheckCircle, XCircle, AlertTriangle, Plus
+  CheckCircle, XCircle, AlertTriangle, Plus, Loader2
 } from 'lucide-react'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import { useToastStore } from '@/stores/toastStore'
 
 interface Stats {
   total_tenders: number
@@ -25,29 +27,61 @@ export default function OfficerDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [recentBids, setRecentBids] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const addToast = useToastStore(s => s.addToast)
 
   useEffect(() => { loadData() }, [])
 
+  useWebSocket((msg) => {
+    if (msg.type === 'bid.submitted') {
+      addToast({ type: 'info', title: 'New Bid Received', description: `${msg.data?.bidder_name || 'A bidder'} submitted a new bid` })
+      loadData()
+    }
+    if (msg.type === 'pipeline.complete') {
+      addToast({ type: 'success', title: 'Pipeline Complete', description: `Compliance score: ${msg.data?.overall_score || 'N/A'}` })
+      loadData()
+    }
+    if (msg.type === 'bid.status_changed') {
+      addToast({ type: 'info', title: 'Bid Status Changed', description: `Bid status updated to ${msg.data?.status}` })
+      loadData()
+    }
+  })
+
   async function loadData() {
     try {
-      const [tendersRes, bidsRes] = await Promise.all([
-        api.get('/tenders').catch(() => ({ data: { items: [] } })),
-        api.get('/tenders').then(async res => {
-          if (!res.data.items?.length) return []
-          const firstTender = res.data.items[0]
-          const r = await api.get(`/tenders/${firstTender.id}/bids`).catch(() => ({ data: { items: [] } }))
-          return r.data.items || []
-        }).catch(() => []),
-      ])
-
+      const tendersRes = await api.get('/tenders').catch(() => ({ data: { items: [] } }))
       const tenders = tendersRes.data.items || []
-      setStats({
-        total_tenders: tenders.length,
-        total_bids: bidsRes.length,
-        pending_review: bidsRes.filter((b: any) => b.status === 'under_review' || b.status === 'submitted').length,
-        approved_bids: bidsRes.filter((b: any) => b.status === 'approved').length,
-      })
-      setRecentBids(bidsRes.slice(0, 5))
+
+      // Try aggregate bids endpoint first, fallback to first tender's bids
+      let allBids: any[] = []
+      try {
+        const allBidsRes = await api.get('/bids/all?limit=10')
+        allBids = allBidsRes.data.items || allBidsRes.data.bids || []
+      } catch {
+        if (tenders.length > 0) {
+          const r = await api.get(`/tenders/${tenders[0].id}/bids`).catch(() => ({ data: { items: [] } }))
+          allBids = r.data.items || r.data.bids || []
+        }
+      }
+
+      // Try analytics summary, fallback to client-side counting
+      try {
+        const summaryRes = await api.get('/analytics/summary')
+        const s = summaryRes.data
+        setStats({
+          total_tenders: s.total_tenders ?? tenders.length,
+          total_bids: s.total_bids ?? allBids.length,
+          pending_review: s.bids_by_status?.under_review ?? 0 + (s.bids_by_status?.submitted ?? 0),
+          approved_bids: s.bids_by_status?.approved ?? 0,
+        })
+      } catch {
+        setStats({
+          total_tenders: tenders.length,
+          total_bids: allBids.length,
+          pending_review: allBids.filter((b: any) => b.status === 'under_review' || b.status === 'submitted').length,
+          approved_bids: allBids.filter((b: any) => b.status === 'approved').length,
+        })
+      }
+      setRecentBids(allBids.slice(0, 5))
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
@@ -153,13 +187,24 @@ export default function OfficerDashboard() {
                 {recentBids.map((bid: any, i: number) => {
                   const badge = statusBadge[bid.status] || { label: bid.status, class: 'status-muted' }
                   return (
-                    <div key={i} className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-accent/50 transition-colors">
+                    <button key={i}
+                      onClick={() => navigate(`/officer/compliance/${bid.id}`)}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-accent/50 transition-colors text-left group">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{bid.bidder_name || bid.bidder_id?.slice(0, 8)}</p>
                         <p className="text-xs text-muted-foreground">{bid.organization || 'Vendor'}</p>
                       </div>
-                      <Badge variant="outline" className={`text-xs ${badge.class}`}>{badge.label}</Badge>
-                    </div>
+                      <div className="flex items-center gap-2">
+                        {bid.compliance_score != null && (
+                          <span className={`text-xs font-mono font-medium ${
+                            bid.compliance_score >= 70 ? 'text-emerald-400' : bid.compliance_score >= 40 ? 'text-amber-400' : 'text-red-400'
+                          }`}>{bid.compliance_score.toFixed(0)}</span>
+                        )}
+                        {bid.status === 'ai_processing' && <Loader2 size={12} className="text-blue-400 animate-spin" />}
+                        <Badge variant="outline" className={`text-xs ${badge.class}`}>{badge.label}</Badge>
+                        <ArrowRight size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </button>
                   )
                 })}
               </div>

@@ -7,6 +7,8 @@ import Register from '@/pages/auth/Register'
 import BidderLayout from '@/components/layout/BidderLayout'
 import BidderDashboard from '@/pages/bidder/BidderDashboard'
 import TenderBrowse from '@/pages/bidder/TenderBrowse'
+import BidDetail from '@/pages/bidder/BidDetail'
+import MyBids from '@/pages/bidder/MyBids'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
@@ -34,6 +36,8 @@ export default function App() {
         <Route path="/bidder" element={<ProtectedRoute><BidderLayout /></ProtectedRoute>}>
           <Route index element={<BidderDashboard />} />
           <Route path="tenders" element={<TenderBrowse />} />
+          <Route path="bids" element={<MyBids />} />
+          <Route path="bids/:bidId" element={<BidDetail />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

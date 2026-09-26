@@ -287,6 +287,116 @@ REGISTRIES = {
             "is_active": True,
         },
     },
+
+    "digilocker": {
+        "DOC-AADHAAR-123": {
+            "registration_number": "DOC-AADHAAR-123",
+            "entity_name": "Director of TechCorp",
+            "data": {
+                "document_id": "DOC-AADHAAR-123",
+                "document_type": "Aadhaar Card",
+                "issued_date": "2015-05-10",
+                "issuer_organization": "UIDAI",
+            },
+            "is_active": True,
+            "signature_valid": True,
+        },
+        "DOC-PAN-456": {
+            "registration_number": "DOC-PAN-456",
+            "entity_name": "TechCorp Solutions Pvt Ltd",
+            "data": {
+                "document_id": "DOC-PAN-456",
+                "document_type": "PAN Card",
+                "issued_date": "2015-01-20",
+                "issuer_organization": "Income Tax Department",
+            },
+            "is_active": True,
+            "signature_valid": True,
+        },
+        "DOC-EDU-789": {
+            "registration_number": "DOC-EDU-789",
+            "entity_name": "Green Energy Systems LLP",
+            "data": {
+                "document_id": "DOC-EDU-789",
+                "document_type": "Degree Certificate",
+                "issued_date": "2010-06-15",
+                "issuer_organization": "Delhi University",
+            },
+            "is_active": True,
+            "signature_valid": True,
+        }
+    },
+
+    "bis": {
+        "R-1234567": {
+            "registration_number": "R-1234567",
+            "entity_name": "TechCorp Solutions Pvt Ltd",
+            "data": {
+                "license_number": "R-1234567",
+                "product_category": "Electronics",
+                "standard_number": "IS 13252",
+                "validity_date": "2026-12-31",
+                "manufacturer_name": "TechCorp Solutions Pvt Ltd",
+                "status": "Active",
+            },
+            "is_active": True,
+        },
+        "CM/L-9876543": {
+            "registration_number": "CM/L-9876543",
+            "entity_name": "Bharath Defence Electronics",
+            "data": {
+                "license_number": "CM/L-9876543",
+                "product_category": "Defence Equipment",
+                "standard_number": "IS 9001",
+                "validity_date": "2025-06-30",
+                "manufacturer_name": "Bharath Defence Electronics Pvt Ltd",
+                "status": "Active",
+            },
+            "is_active": True,
+        }
+    },
+
+    "income_tax": {
+        "AABCT1234E": {
+            "registration_number": "AABCT1234E",
+            "entity_name": "TechCorp Solutions Pvt Ltd",
+            "data": {
+                "pan_number": "AABCT1234E",
+                "filing_status": "filed",
+                "assessment_year": "2025-26",
+                "declared_turnover": 25000000,
+                "filing_date": "2025-07-25",
+                "return_type": "ITR-6",
+            },
+            "is_active": True,
+        },
+        "AADPG5678F": {
+            "registration_number": "AADPG5678F",
+            "entity_name": "Green Energy Systems LLP",
+            "data": {
+                "pan_number": "AADPG5678F",
+                "filing_status": "filed",
+                "assessment_year": "2025-26",
+                "declared_turnover": 3500000,
+                "filing_date": "2025-07-28",
+                "return_type": "ITR-5",
+            },
+            "is_active": True,
+        },
+        "AABCB9012G": {
+            "registration_number": "AABCB9012G",
+            "entity_name": "Bharath Defence Electronics Pvt Ltd",
+            "data": {
+                "pan_number": "AABCB9012G",
+                "filing_status": "not-filed",
+                "assessment_year": "2025-26",
+                "declared_turnover": 120000000,
+                "filing_date": None,
+                "return_type": None,
+            },
+            "is_active": True,
+        },
+    }
 }
 
 
@@ -332,6 +442,23 @@ async def list_registries():
     }
 
 
+@app.get("/api/digilocker/verify/{document_id}")
+async def verify_digilocker(document_id: str):
+    registry = REGISTRIES.get("digilocker")
+    if not registry:
+        raise HTTPException(404, "Registry not found")
+        
+    entry = registry.get(document_id)
+    if not entry:
+        raise HTTPException(404, "Document not found in DigiLocker")
+        
+    return {
+        "valid": entry.get("is_active", False),
+        "signature_valid": entry.get("signature_valid", False),
+        "data": entry.get("data", {})
+    }
+
+
 @app.get("/api/blacklist/check/{identifier}")
 async def check_blacklist(identifier: str):
     """Check if an entity is blacklisted (by PAN or name)."""
@@ -339,8 +466,12 @@ async def check_blacklist(identifier: str):
         data = entry.get("data", {})
         if (data.get("pan", "").lower() == identifier.lower() or
                 data.get("entity_name", "").lower() == identifier.lower()):
-            return {"is_blacklisted": True, "entry": entry}
-    return {"is_blacklisted": False}
+            return {
+                "is_blacklisted": True,
+                "details": data,
+                "reason": data.get("reason", "Blacklisted")
+            }
+    return {"is_blacklisted": False, "details": {}}
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ import (
 	"github.com/gemverify/gateway/internal/database"
 	"github.com/gemverify/gateway/internal/grpcclient"
 	"github.com/gemverify/gateway/internal/ws"
+	pb "github.com/gemverify/gateway/proto/ai"
 )
 
 type ComplianceHandler struct {
@@ -162,6 +163,38 @@ func (h *ComplianceHandler) TriggerPipeline(c *fiber.Ctx) error {
 		tenderReqs["required_documents"] = docList
 	}
 
+	var bidAmount, estimatedValue float64
+	var bidderName, bidderOrg string
+	var bidCount int
+	err = database.Pool.QueryRow(context.Background(), `SELECT b.bid_amount, COALESCE(t.estimated_value, 0), u.full_name, COALESCE(u.organization, ''), (SELECT COUNT(*) FROM bids WHERE bidder_id = b.bidder_id) FROM bids b JOIN tenders t ON b.tender_id = t.id JOIN users u ON b.bidder_id = u.id WHERE b.id = $1`, bidID).Scan(&bidAmount, &estimatedValue, &bidderName, &bidderOrg, &bidCount)
+	if err == nil {
+		bidMeta := map[string]interface{}{
+			"bid_amount":          bidAmount,
+			"estimated_value":     estimatedValue,
+			"bidder_name":         bidderName,
+			"bidder_organization": bidderOrg,
+			"bidder_bid_count":    bidCount,
+		}
+		bidMetaJSON, _ := json.Marshal(bidMeta)
+		tenderReqs["eligibility_criteria_json"] = string(bidMetaJSON)
+	}
+
+	// Send pipeline.started event immediately
+	ws.GlobalHub.SendToUser(userID, ws.Message{
+		Type: "pipeline.started",
+		Data: map[string]interface{}{
+			"bid_id": bidID,
+			"steps": []string{"ocr", "verification", "matching", "fraud_detection", "scoring", "recommendation"},
+		},
+	})
+	ws.GlobalHub.BroadcastToRole("officer", ws.Message{
+		Type: "pipeline.started",
+		Data: map[string]interface{}{
+			"bid_id": bidID,
+			"steps": []string{"ocr", "verification", "matching", "fraud_detection", "scoring", "recommendation"},
+		},
+	})
+
 	// Run pipeline in goroutine (non-blocking)
 	go func() {
 		if grpcclient.Client == nil {
@@ -170,6 +203,41 @@ func (h *ComplianceHandler) TriggerPipeline(c *fiber.Ctx) error {
 				`UPDATE bids SET status = 'under_review', updated_at = NOW() WHERE id = $1`, bidID)
 			return
 		}
+
+		go func() {
+			stream, err := grpcclient.StreamPipelineProgress(context.Background(), &pb.PipelineRequest{
+				BidId: bidID,
+				TenderId: tenderID,
+			})
+			if err == nil {
+				for {
+					event, err := stream.Recv()
+					if err != nil {
+						break
+					}
+					ws.GlobalHub.SendToUser(userID, ws.Message{
+						Type: "pipeline.progress",
+						Data: map[string]interface{}{
+							"bid_id": bidID,
+							"step": event.GetStepName(),
+							"status": event.GetStatus(), 
+							"message": event.GetMessage(),
+							"progress": event.GetProgressPercent(),
+						},
+					})
+					ws.GlobalHub.BroadcastToRole("officer", ws.Message{
+						Type: "pipeline.progress",
+						Data: map[string]interface{}{
+							"bid_id": bidID,
+							"step": event.GetStepName(),
+							"status": event.GetStatus(),
+							"message": event.GetMessage(),
+							"progress": event.GetProgressPercent(),
+						},
+					})
+				}
+			}
+		}()
 
 		result, err := grpcclient.RunPipeline(
 			context.Background(), bidID, tenderID,

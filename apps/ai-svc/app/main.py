@@ -59,6 +59,28 @@ class AIServiceServicer(ai_service_pb2_grpc.AIServiceServicer):
             "local_content_percentage": request.tender_requirements.local_content_percentage,
         }
 
+        import json
+        bid_data = {}
+        # Try direct field first (if proto was regenerated)
+        if hasattr(request.tender_requirements, 'eligibility_criteria_json') and request.tender_requirements.eligibility_criteria_json:
+            try:
+                parsed_json = json.loads(request.tender_requirements.eligibility_criteria_json)
+                if isinstance(parsed_json, dict):
+                    bid_data = parsed_json
+            except json.JSONDecodeError:
+                pass
+        # Fallback: check EligibilityChecks for __bid_metadata__ entry (Go transport mechanism)
+        if not bid_data and hasattr(request.tender_requirements, 'eligibility_checks'):
+            for check in request.tender_requirements.eligibility_checks:
+                if check.id == '__bid_metadata__' and check.description:
+                    try:
+                        parsed_json = json.loads(check.description)
+                        if isinstance(parsed_json, dict):
+                            bid_data = parsed_json
+                    except json.JSONDecodeError:
+                        pass
+                    break
+
         # Run pipeline synchronously (wrapping async)
         loop = asyncio.new_event_loop()
         try:
@@ -68,6 +90,7 @@ class AIServiceServicer(ai_service_pb2_grpc.AIServiceServicer):
                     tender_id=request.tender_id,
                     documents=documents,
                     tender_requirements=tender_reqs,
+                    bid_data=bid_data,
                     partial_rerun=request.partial_rerun,
                     rerun_doc_types=list(request.rerun_doc_types),
                 )
@@ -280,11 +303,85 @@ class AIServiceServicer(ai_service_pb2_grpc.AIServiceServicer):
     def AskCopilot(self, request, context):
         """Handle Copilot Q&A queries."""
         logger.info(f"Copilot query: {request.question[:80]}...")
-
-        # For now return a template response — will be backed by RAG
+        
         response = ai_service_pb2.CopilotResponse()
-        response.answer = f"Based on GFR 2017 and GeM guidelines regarding '{request.question[:50]}...': This feature requires a Groq API key for full AI-powered responses. Please configure GROQ_API_KEY in your environment."
-        response.confidence = 0.5
+        
+        groq_api_key = os.getenv("GROQ_API_KEY", "")
+        if groq_api_key:
+            try:
+                from groq import Groq
+                import json
+                client = Groq(api_key=groq_api_key)
+                
+                system_prompt = (
+                    "You are an expert procurement assistant for the Government e-Marketplace (GeM) in India. "
+                    "You answer questions based on GFR 2017 rules, GeM procurement guidelines, and CVC guidelines. "
+                    "Respond with a JSON object containing: 'answer' (your detailed response), "
+                    "'references' (list of relevant rule/guideline citations as strings), and 'confidence' (float 0-1)."
+                )
+                
+                completion = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": request.question}
+                    ],
+                    temperature=0.3,
+                    max_tokens=1024,
+                    response_format={"type": "json_object"},
+                )
+                
+                result = json.loads(completion.choices[0].message.content)
+                response.answer = result.get("answer", "No answer provided.")
+                response.confidence = result.get("confidence", 0.8)
+                if result.get("references"):
+                    response.references.extend(result.get("references"))
+                return response
+            except Exception as e:
+                logger.error(f"Groq API error in AskCopilot: {e}")
+                # Fallback to rule-based on error
+        
+        # Comprehensive Rule-based Fallback
+        q = request.question.lower()
+        answer = "I'm a rule-based fallback since the Groq API key is not configured. "
+        references = []
+        confidence = 0.5
+        
+        if "gfr" in q or "evaluation" in q or "rule" in q:
+            answer += "Under GFR 2017 Rule 173, technical evaluation must strictly follow tender criteria without relaxing conditions. Financial evaluation should only consider technically qualified bids."
+            references = ["GFR 2017, Rule 173(xxi)", "GFR 2017, Rule 173(xxii)"]
+            confidence = 0.9
+        elif "reject" in q or "clarification" in q:
+            answer += "Reject a bid if mandatory eligibility documents (like PAN/GST) are invalid, blacklisted, or completely missing. Request clarification for ambiguous documents, minor errors, or historical data where the intent is clear, provided it doesn't give an unfair advantage."
+            references = ["GeM GTC Section 4(ii)", "CVC Circular No. 04/04/21"]
+            confidence = 0.85
+        elif "make in india" in q or "mii" in q:
+            answer += "Under Public Procurement (Preference to Make in India) Order 2017, Class-I local suppliers (>=50% local content) get purchase preference. Class-II (20-50%) are eligible to bid but get no preference."
+            references = ["DPIIT Order No. P-45021/2/2017-PP (BE-II)"]
+            confidence = 0.9
+        elif "risk" in q or "scoring" in q:
+            answer += "Risk scoring analyzes entity freshness, bid amount anomalies (e.g., <50% of estimate), document consistency, and verification failures. Higher risk scores (>=30) flag the bid as suspicious."
+            references = ["GeM AI Verification Guidelines V1.0"]
+            confidence = 0.8
+        elif "cvc" in q or "override" in q:
+            answer += "CVC guidelines allow officers to override system recommendations if they record clear, objective reasons in writing justifying the deviation. It must not favor a specific bidder."
+            references = ["CVC Manual on Procurement of Goods 2022, Chapter 2.5"]
+            confidence = 0.9
+        elif "msme" in q or "udyam" in q:
+            answer += "MSMEs must provide a valid Udyam Registration Certificate. They are often exempt from EMD (Earnest Money Deposit) and may get purchase preference if their bid is within L1 + 15%."
+            references = ["MSME Development Act, 2006", "Public Procurement Policy for MSEs Order, 2012"]
+            confidence = 0.95
+        elif "verify" in q or "standard" in q:
+            answer += "Document verification requires checking the extracted identifier against authoritative government registries (like MCA21, GSTIN, DigiLocker). Self-declarations require post-award sample audits."
+            references = ["GeM SOP for Document Verification 2023"]
+            confidence = 0.85
+        else:
+            answer += "Please configure GROQ_API_KEY for a full AI response. I can answer basic questions about GFR 2017, GeM rules, MII, risk scoring, CVC guidelines, MSME, and verification standards."
+        
+        response.answer = answer
+        response.confidence = confidence
+        response.references.extend(references)
+        
         return response
 
     def ParseTenderDocument(self, request, context):

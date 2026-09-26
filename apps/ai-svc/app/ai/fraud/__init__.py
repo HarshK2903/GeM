@@ -1,4 +1,4 @@
 """Fraud detection module init."""
-from app.ai.fraud.detector import run_fraud_checks, FraudCheckResult
+from app.ai.fraud.detector import detect_fraud, FraudCheckResult
 
-__all__ = ["run_fraud_checks", "FraudCheckResult"]
+__all__ = ["detect_fraud", "FraudCheckResult"]

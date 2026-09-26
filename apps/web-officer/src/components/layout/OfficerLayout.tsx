@@ -2,10 +2,8 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import {
-  LayoutDashboard, FileText, ShieldCheck, Sparkles, BarChart3,
-  ScrollText, Shield, LogOut, ChevronRight
-} from 'lucide-react'
+import { LayoutDashboard, FileText, ShieldCheck, Sparkles, BarChart3, ScrollText, Shield, LogOut, ChevronRight } from 'lucide-react'
+import { ToastContainer } from '@/components/ui/toast'
 
 const navItems = [
   { to: '/officer', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -27,6 +25,7 @@ export default function OfficerLayout() {
 
   return (
     <div className="flex h-screen bg-background">
+      <ToastContainer />
       {/* Sidebar */}
       <aside className="w-[240px] flex flex-col border-r border-border bg-sidebar flex-shrink-0">
         {/* Logo */}

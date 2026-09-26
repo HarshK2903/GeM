@@ -117,6 +117,16 @@ func RunPipeline(ctx context.Context, bidID, tenderID string,
 	if v, ok := tenderReqs["local_content_percentage"].(float64); ok {
 		req.TenderRequirements.LocalContentPercentage = float32(v)
 	}
+	// Pack bid metadata as a special eligibility check entry
+	// (proto wasn't regenerated, so we transport via EligibilityChecks)
+	if v, ok := tenderReqs["eligibility_criteria_json"].(string); ok && v != "" {
+		req.TenderRequirements.EligibilityChecks = append(req.TenderRequirements.EligibilityChecks, &pb.EligibilityRequirement{
+			Id:          "__bid_metadata__",
+			Description: v,
+			Category:    "metadata",
+			Mandatory:   false,
+		})
+	}
 
 	// Call AI service with timeout
 	callCtx, cancel := context.WithTimeout(ctx, 120*time.Second)
@@ -207,4 +217,20 @@ func StoreResult(ctx context.Context, pool interface{}, result *PipelineResult) 
 // ToJSON serializes the result to JSON
 func (r *PipelineResult) ToJSON() ([]byte, error) {
 	return json.Marshal(r)
+}
+
+// StreamPipelineProgress streams progress
+func StreamPipelineProgress(ctx context.Context, req *pb.PipelineRequest) (pb.AIService_StreamPipelineProgressClient, error) {
+	if Client == nil {
+		return nil, fmt.Errorf("AI service not connected")
+	}
+	return Client.StreamPipelineProgress(ctx, req)
+}
+
+// AskCopilot
+func AskCopilot(ctx context.Context, req *pb.CopilotRequest) (*pb.CopilotResponse, error) {
+	if Client == nil {
+		return nil, fmt.Errorf("AI service not connected")
+	}
+	return Client.AskCopilot(ctx, req)
 }

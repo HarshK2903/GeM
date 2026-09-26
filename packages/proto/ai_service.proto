@@ -190,6 +190,7 @@ message TenderRequirements {
   float min_turnover = 7;
   float local_content_percentage = 8;
   repeated EligibilityRequirement eligibility_checks = 9;
+  string eligibility_criteria_json = 10;
 }
 
 message EligibilityRequirement {

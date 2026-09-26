@@ -2,10 +2,12 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { LayoutDashboard, FileText, Shield, LogOut } from 'lucide-react'
+import { LayoutDashboard, FileText, Shield, LogOut, FileCheck } from 'lucide-react'
+import { ToastContainer } from '@/components/ui/toast'
 
 const navItems = [
   { to: '/bidder', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/bidder/bids', icon: FileCheck, label: 'My bids' },
   { to: '/bidder/tenders', icon: FileText, label: 'Browse tenders' },
 ]
 
@@ -20,6 +22,7 @@ export default function BidderLayout() {
 
   return (
     <div className="flex h-screen bg-background">
+      <ToastContainer />
       <aside className="w-[240px] flex flex-col border-r border-border bg-sidebar flex-shrink-0">
         <div className="flex items-center gap-2.5 px-5 h-14 border-b border-sidebar-border">
           <div className="w-7 h-7 rounded-md bg-[var(--gem-blue)] flex items-center justify-center">

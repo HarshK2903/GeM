@@ -127,6 +127,23 @@ func main() {
 	auditHandler := handlers.NewAuditHandler(cfg)
 	api.Get("/audit", middleware.RequireRole("officer", "admin"), auditHandler.ListAuditEntries)
 
+	// Analytics routes (officer/admin only)
+	analyticsHandler := handlers.NewAnalyticsHandler(database.Pool)
+	api.Get("/analytics/summary", middleware.RequireRole("officer", "admin"), analyticsHandler.GetSummary)
+	api.Get("/analytics/department-stats", middleware.RequireRole("officer", "admin"), analyticsHandler.GetDepartmentStats)
+	api.Get("/analytics/risk-distribution", middleware.RequireRole("officer", "admin"), analyticsHandler.GetRiskDistribution)
+	api.Get("/analytics/requirement-compliance", middleware.RequireRole("officer", "admin"), analyticsHandler.GetRequirementCompliance)
+	api.Get("/analytics/timeline", middleware.RequireRole("officer", "admin"), analyticsHandler.GetTimeline)
+	api.Get("/analytics/score-dimensions", middleware.RequireRole("officer", "admin"), analyticsHandler.GetScoreDimensions)
+
+	// Copilot routes
+	copilotHandler := handlers.NewCopilotHandler()
+	api.Post("/copilot/ask", copilotHandler.AskCopilot)
+
+	// New Bid routes
+	api.Post("/bids/:id/withdraw", middleware.RequireRole("bidder"), bidHandler.WithdrawBid)
+	api.Get("/bids/all", middleware.RequireRole("officer", "admin"), bidHandler.ListAllBids)
+
 	// --- WebSocket Endpoint ---
 	app.Use("/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {

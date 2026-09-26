@@ -216,6 +216,80 @@ def match_requirements(
             confidence=0.9,
         ))
 
+    # --- Check DigiLocker verification ---
+    digilocker = verification_results.get("digilocker")
+    if digilocker:
+        if digilocker.get("status") == "verified":
+            matches.append(MatchResult(
+                requirement_id="digilocker_verification",
+                requirement_text="DigiLocker document verification",
+                status="met",
+                evidence_summary="Document digitally verified via DigiLocker",
+                source_document="digilocker",
+                confidence=0.95,
+            ))
+        elif digilocker.get("status") == "mismatch":
+            matches.append(MatchResult(
+                requirement_id="digilocker_verification",
+                requirement_text="DigiLocker document verification",
+                status="partial",
+                evidence_summary="DigiLocker document has discrepancies",
+                source_document="digilocker",
+                confidence=0.6,
+            ))
+        else:
+            matches.append(MatchResult(
+                requirement_id="digilocker_verification",
+                requirement_text="DigiLocker document verification",
+                status="unmet",
+                evidence_summary=f"DigiLocker verification status: {digilocker.get('status', 'unknown')}",
+                source_document="digilocker",
+                confidence=0.8,
+            ))
+
+    # --- Check BIS certification ---
+    bis = verification_results.get("bis_certificate")
+    if bis:
+        if bis.get("status") == "verified":
+            matches.append(MatchResult(
+                requirement_id="bis_certification",
+                requirement_text="BIS (Bureau of Indian Standards) certification",
+                status="met",
+                evidence_summary="Valid BIS certification verified against registry",
+                source_document="bis_certificate",
+                confidence=0.95,
+            ))
+        else:
+            matches.append(MatchResult(
+                requirement_id="bis_certification",
+                requirement_text="BIS (Bureau of Indian Standards) certification",
+                status="unmet",
+                evidence_summary=f"BIS verification status: {bis.get('status', 'unknown')}",
+                source_document="bis_certificate",
+                confidence=0.8,
+            ))
+
+    # --- Check Income Tax Return filing ---
+    itr = verification_results.get("income_tax")
+    if itr and itr.get("filing_verified"):
+        matches.append(MatchResult(
+            requirement_id="income_tax_filing",
+            requirement_text="Income Tax Return filing verification",
+            status="met",
+            evidence_summary=f"ITR filing verified — AY {itr.get('assessment_year', 'N/A')}, status: {itr.get('filing_status', 'filed')}",
+            source_document="income_tax",
+            confidence=0.9,
+        ))
+    elif itr and itr.get("status") == "verified":
+        matches.append(MatchResult(
+            requirement_id="income_tax_filing",
+            requirement_text="Income Tax Return filing verification",
+            status="partial",
+            evidence_summary="PAN verified but ITR filing status could not be confirmed",
+            source_document="income_tax",
+            confidence=0.7,
+        ))
+
     # --- Check custom eligibility requirements ---
     custom_reqs = tender_requirements.get("eligibility_checks", [])
     for req in custom_reqs:

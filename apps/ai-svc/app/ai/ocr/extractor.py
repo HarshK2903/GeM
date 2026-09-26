@@ -67,6 +67,8 @@ def extract_fields(raw_text: str, doc_type: str) -> Dict[str, str]:
         "oem_authorization": _extract_oem_fields,
         "company_registration": _extract_company_reg_fields,
         "make_in_india": _extract_make_in_india_fields,
+        "digilocker": _extract_digilocker_fields,
+        "bis": _extract_bis_fields,
     }
 
     extractor = extractors.get(doc_type, _extract_generic_fields)
@@ -259,6 +261,64 @@ def _extract_make_in_india_fields(text: str) -> Dict[str, str]:
     if percentage_match:
         fields["local_content_percentage"] = percentage_match.group(1)
 
+    return fields
+
+
+def _extract_digilocker_fields(text: str) -> Dict[str, str]:
+    """Extract fields from a DigiLocker verified document."""
+    fields = {}
+    
+    uri_match = re.search(r'(?:URI|Issuer\s*URI)\s*[:\-]?\s*([a-zA-Z0-9\-\.]+)', text, re.IGNORECASE)
+    if uri_match:
+        fields["document_uri"] = uri_match.group(1)
+        
+    sig_match = re.search(r'(?:Digitally\s*signed\s*by|Signature|Signed\s*by)\s*[:\-]?\s*(.+?)(?:\n|$)', text, re.IGNORECASE)
+    if sig_match:
+        fields["digital_signature"] = sig_match.group(1).strip()
+        
+    doc_id_match = re.search(r'(?:Document\s*(?:Hash|ID)|ID)\s*[:\-]?\s*([a-zA-Z0-9\-\_]+)', text, re.IGNORECASE)
+    if doc_id_match:
+        fields["document_id"] = doc_id_match.group(1)
+        
+    date_match = re.search(r'(?:Issued\s*Date|Date\s*of\s*Issue)\s*[:\-]?\s*(\d{2}[/\-]\d{2}[/\-]\d{4})', text, re.IGNORECASE)
+    if date_match:
+        fields["issued_date"] = date_match.group(1)
+        
+    issuer_match = re.search(r'(?:Issuer\s*Organization|Issued\s*by)\s*[:\-]?\s*(.+?)(?:\n|$)', text, re.IGNORECASE)
+    if issuer_match:
+        fields["issuer_organization"] = issuer_match.group(1).strip()
+        
+    type_match = re.search(r'(?:Document\s*Type|Type)\s*[:\-]?\s*(.+?)(?:\n|$)', text, re.IGNORECASE)
+    if type_match:
+        fields["document_type"] = type_match.group(1).strip()
+        
+    return fields
+
+
+def _extract_bis_fields(text: str) -> Dict[str, str]:
+    """Extract fields from BIS Certification."""
+    fields = {}
+    
+    license_match = re.search(r'(?:License|Certificate)\s*(?:No|Number)\.?\s*[:\-]?\s*((?:R|CM/L)[-\s]?\d+)', text, re.IGNORECASE)
+    if license_match:
+        fields["license_number"] = license_match.group(1).replace(" ", "")
+        
+    category_match = re.search(r'(?:Product\s*Category|Product)\s*[:\-]?\s*(.+?)(?:\n|$)', text, re.IGNORECASE)
+    if category_match:
+        fields["product_category"] = category_match.group(1).strip()
+        
+    standard_match = re.search(r'(?:Standard|IS\s*No\.?)\s*[:\-]?\s*(IS\s*\d+)', text, re.IGNORECASE)
+    if standard_match:
+        fields["standard_number"] = standard_match.group(1).strip()
+        
+    validity_match = re.search(r'(?:Valid\s*(?:upto|until|till)|Validity)\s*[:\-]?\s*(\d{2}[/\-]\d{2}[/\-]\d{4})', text, re.IGNORECASE)
+    if validity_match:
+        fields["validity_date"] = validity_match.group(1)
+        
+    mfg_match = re.search(r'(?:Manufacturer(?:s)?\s*Name|Name\s*of\s*Manufacturer)\s*[:\-]?\s*(.+?)(?:\n|$)', text, re.IGNORECASE)
+    if mfg_match:
+        fields["manufacturer_name"] = mfg_match.group(1).strip()
+        
     return fields
 
 

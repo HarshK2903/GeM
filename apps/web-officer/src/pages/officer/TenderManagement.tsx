@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,16 +11,23 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Plus, Search, Calendar, Building2, FileText, Loader2, Check } from 'lucide-react'
 
-const docTypes = ['udyam', 'gst', 'pan', 'mca21', 'epfo', 'esic', 'startup_cert', 'turnover_cert', 'make_in_india', 'gem_seller']
+const docTypes = [
+  'udyam', 'gst', 'pan', 'mca21', 'epfo', 'esic',
+  'startup_cert', 'turnover_cert', 'make_in_india', 'gem_seller',
+  'digilocker', 'bis_certificate', 'income_tax_return', 'nsic', 'oem_authorization'
+]
 
 const statusMap: Record<string, { label: string; class: string }> = {
   draft: { label: 'Draft', class: 'status-muted' },
   published: { label: 'Published', class: 'status-success' },
   evaluation: { label: 'Evaluation', class: 'status-warning' },
+  awarded: { label: 'Awarded', class: 'status-info' },
+  cancelled: { label: 'Cancelled', class: 'status-danger' },
   closed: { label: 'Closed', class: 'status-danger' },
 }
 
 export default function TenderManagement() {
+  const navigate = useNavigate()
   const [tenders, setTenders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -37,6 +45,15 @@ export default function TenderManagement() {
       setTenders(data.items || [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
+  }
+
+  async function handleStatusChange(tenderId: string, newStatus: string) {
+    try {
+      await api.patch(`/tenders/${tenderId}`, { status: newStatus })
+      loadTenders()
+    } catch (err) {
+      console.error('Status change failed:', err)
+    }
   }
 
   async function handleCreate() {
@@ -146,16 +163,53 @@ export default function TenderManagement() {
                         <Calendar size={12} /> {deadline.toLocaleDateString()}
                       </span>
                     )}
+                    {t.bid_count != null && (
+                      <span className="flex items-center gap-1">
+                        <FileText size={12} /> {t.bid_count} bid{t.bid_count !== 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
                   {t.description && <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>}
                   {t.required_documents?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-3">
-                      {t.required_documents.slice(0, 4).map((d: string) => (
+                      {t.required_documents.slice(0, 5).map((d: string) => (
                         <span key={d} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">{d.replace(/_/g, ' ')}</span>
                       ))}
-                      {t.required_documents.length > 4 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">+{t.required_documents.length - 4}</span>}
+                      {t.required_documents.length > 5 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">+{t.required_documents.length - 5}</span>}
                     </div>
                   )}
+                  {/* Status change + actions */}
+                  <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border">
+                    {t.status === 'draft' && (
+                      <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1 text-emerald-400 hover:text-emerald-300"
+                        onClick={() => handleStatusChange(t.id, 'published')}>
+                        <Check size={10} /> Publish
+                      </Button>
+                    )}
+                    {t.status === 'published' && (
+                      <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1 text-amber-400 hover:text-amber-300"
+                        onClick={() => handleStatusChange(t.id, 'evaluation')}>
+                        Evaluation
+                      </Button>
+                    )}
+                    {t.status === 'evaluation' && (
+                      <>
+                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1 text-emerald-400 hover:text-emerald-300"
+                          onClick={() => handleStatusChange(t.id, 'awarded')}>
+                          Award
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1 text-red-400 hover:text-red-300"
+                          onClick={() => handleStatusChange(t.id, 'cancelled')}>
+                          Cancel
+                        </Button>
+                      </>
+                    )}
+                    <div className="flex-1" />
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2"
+                      onClick={() => navigate(`/officer/compliance`)}>
+                      Review bids
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )
