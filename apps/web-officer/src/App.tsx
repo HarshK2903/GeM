@@ -11,7 +11,7 @@ import ComplianceDeepDive from '@/pages/officer/ComplianceDeepDive'
 import CopilotChat from '@/pages/officer/CopilotChat'
 import AnalyticsDashboard from '@/pages/officer/AnalyticsDashboard'
 import AuditTrail from '@/pages/officer/AuditTrail'
-
+import TenderDetailView from '@/pages/officer/TenderDetailView'
 // Tender creation wizard
 import TenderCreateLayout from '@/pages/officer/tender-create/TenderCreateLayout'
 import Step01General from '@/pages/officer/tender-create/steps/Step01General'
@@ -52,6 +52,7 @@ export default function App() {
         <Route path="/officer" element={<ProtectedRoute><OfficerLayout /></ProtectedRoute>}>
           <Route index element={<OfficerDashboard />} />
           <Route path="tenders" element={<TenderManagement />} />
+          <Route path="tenders/:tenderId" element={<TenderDetailView />} />
           {/* Multi-page tender creation wizard */}
           <Route path="tenders/new" element={<TenderCreateLayout />}>
             <Route index element={<Navigate to="general" replace />} />

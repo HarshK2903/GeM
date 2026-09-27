@@ -18,7 +18,7 @@ Modeled after Karnataka e-Procurement portal. Tenders have 10+ sections:
 General Details (20+ fields), Eligibility Conditions (23+), Technical Criteria table, Required Documents table, Tender Group Items table, Delivery Schedule table, Contact Info, Amount Details, Tender Schedule (10+ dates), Published User Details.
 Reference screenshots at: /home/bugulnoz/Pictures/Screenshots/Screenshot from 2026-09-27 18-*
 
-## Current Work Status (Updated Sept 27, 2026 10:00PM)
+## Current Work Status (Updated Sept 28, 2026 2:50AM)
 
 ### NEW: Multi-Page Tender Creation Wizard ✅ COMPLETE
 Route: `/officer/tenders/new/*` — 12 separate pages with sidebar stepper + floating AI chatbot
@@ -40,17 +40,65 @@ Files at: `apps/web-officer/src/pages/officer/tender-create/`
 - steps/Step11Additional.tsx — Additional Info + uploads (91 lines)
 - steps/Step12Review.tsx — Read-only review + validation (130 lines)
 
-### Officer TenderManagement.tsx (11-step wizard) - OLD INLINE FORM (still exists but button redirects to wizard)
-### Bidder TenderBrowse.tsx - ALL COMPLETE ✅
+### NEW: Officer Tender Detail View ✅ COMPLETE
+Route: `/officer/tenders/:tenderId`
+File: `apps/web-officer/src/pages/officer/TenderDetailView.tsx` (759 lines)
+- Comprehensive read-only view of published tender with 10+ sections
+- Sticky header with Publish/Edit/View Bids actions
+- **Lifecycle Management Panel**: Status timeline, action buttons per status
+  - DRAFT→PUBLISHED→OPEN→UNDER_EVALUATION→AWARDED→CLOSED
+  - Actions: Publish, Open, Suspend, Resume, Extend Deadline, Close, Cancel, Award, Clone
+- **Action Confirmation Dialogs**: With mandatory reason for destructive actions
+- **Extend Deadline Dialog**: datetime-local input
+- **Statistics Summary Card**: Total bids, by status, days remaining, value
+- **Activity/Audit Log Timeline**: Status change history
+- **Enhanced Bids Table**: With compliance scores, risk levels, review/approve/reject actions
+- Bids received table at bottom fetched from /tenders/:id/bids
+
+### NEW: Bidder Tender Detail View ✅ COMPLETE
+Route: `/bidder/tenders/:tenderId`
+File: `apps/web-bidder/src/pages/bidder/TenderDetail.tsx` (633 lines)
+- Left sidebar with scroll-anchor section navigation
+- 12 comprehensive sections with all tender data
+- Sticky bottom bar with Quick Upload + Start Full Submission buttons
+- Deadline countdown timer
+
+### NEW: Bidder Multi-Step Bid Submission Wizard ✅ COMPLETE
+Route: `/bidder/tenders/:tenderId/submit`
+File: `apps/web-bidder/src/pages/bidder/BidSubmission.tsx` (1441 lines)
+- 11-step sequential wizard with sidebar stepper
+- Step 1: Company Profile (org type, address, contact)
+- Step 2: Udyam/MSME Registration (number validation, certificate upload)
+- Step 3: GST Registration (GSTIN format validation, returns upload)
+- Step 4: PAN & Income Tax (PAN format validation, ITR for 3 years)
+- Step 5: Company Registration (MCA21/CIN, incorporation cert)
+- Step 6: Financial Documents (balance sheets, turnover, net worth, bank details)
+- Step 7: Experience & Certifications (ISO, work orders, OEM authorization)
+- Step 8: Statutory Compliance (EPFO, ESIC, labour license)
+- Step 9: Policy Declarations (Make in India, MSME, Startup, blacklisting declaration)
+- Step 10: Financial Bid (itemwise/lumpsum pricing, EMD proof)
+- Step 11: Review & Submit (validation summary, final declaration)
+- Regex validation for GSTIN, PAN, Udyam numbers
+- File uploads at each step with drag-drop zones
+- FormData submission to /bids API
+
+### NEW: Bidder TenderBrowse Refactored ✅ COMPLETE
+File: `apps/web-bidder/src/pages/bidder/TenderBrowse.tsx` (360 lines, rewritten)
+- Rich 2-column card grid replacing old table
+- Filter chips (All/Open/Closed/Expired) + sort options
+- Each card shows full tender info with badges, stats, deadline countdown
+- Links to dedicated /bidder/tenders/:id detail page
 
 ### Bug Fixes Applied ✅
 - TenderManagement.tsx: Fixed tenders.map crash (API returns {items:[...]})
+- TenderManagement.tsx: Fixed View Details button (was missing onClick handler)
 - OfficerDashboard.tsx: Fixed operator precedence bug in pending_review
 - Auth pages (all 4): Replaced <a href> with React Router <Link to>
 - toast.tsx (both apps): Type-only import fix
 - useWebSocket.ts (both apps): Stored onMessage in useRef
 - main.tsx (both apps): Custom ErrorBoundary
 - ComplianceDeepDive.tsx: Fixed type-only import
+- TenderDetail.tsx (bidder): Fixed @gemverify/shared-types import
 
 ### Backend Architecture (runs via scripts/dev.sh)
 - Go Gateway (port 8000): Fiber v2, PostgreSQL, Redis, MinIO, gRPC

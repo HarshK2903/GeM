@@ -7,6 +7,8 @@ import Register from '@/pages/auth/Register'
 import BidderLayout from '@/components/layout/BidderLayout'
 import BidderDashboard from '@/pages/bidder/BidderDashboard'
 import TenderBrowse from '@/pages/bidder/TenderBrowse'
+import TenderDetail from '@/pages/bidder/TenderDetail'
+import BidSubmission from '@/pages/bidder/BidSubmission'
 import BidDetail from '@/pages/bidder/BidDetail'
 import MyBids from '@/pages/bidder/MyBids'
 
@@ -36,6 +38,8 @@ export default function App() {
         <Route path="/bidder" element={<ProtectedRoute><BidderLayout /></ProtectedRoute>}>
           <Route index element={<BidderDashboard />} />
           <Route path="tenders" element={<TenderBrowse />} />
+          <Route path="tenders/:tenderId" element={<TenderDetail />} />
+          <Route path="tenders/:tenderId/submit" element={<BidSubmission />} />
           <Route path="bids" element={<MyBids />} />
           <Route path="bids/:bidId" element={<BidDetail />} />
         </Route>

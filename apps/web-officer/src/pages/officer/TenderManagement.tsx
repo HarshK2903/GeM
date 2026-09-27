@@ -161,7 +161,7 @@ export default function TenderManagement() {
                   </div>
                 </CardContent>
                 <CardFooter className="pt-3 border-t">
-                  <Button variant="outline" className="w-full gap-2">
+                  <Button variant="outline" className="w-full gap-2" onClick={() => navigate(`/officer/tenders/${tender.id}`)}>
                     <FileText className="h-4 w-4" />
                     View Details
                   </Button>
