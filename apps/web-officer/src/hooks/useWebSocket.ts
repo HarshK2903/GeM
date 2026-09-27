@@ -10,7 +10,13 @@ type MessageHandler = (message: WSMessage) => void
 
 export function useWebSocket(onMessage?: MessageHandler) {
   const wsRef = useRef<WebSocket | null>(null)
+  const onMessageRef = useRef<MessageHandler | undefined>(onMessage)
   const { token } = useAuthStore()
+
+  // Keep the callback ref up to date without triggering reconnects
+  useEffect(() => {
+    onMessageRef.current = onMessage
+  }, [onMessage])
 
   const connect = useCallback(() => {
     if (!token || wsRef.current?.readyState === WebSocket.OPEN) return
@@ -27,7 +33,7 @@ export function useWebSocket(onMessage?: MessageHandler) {
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data) as WSMessage
-        onMessage?.(message)
+        onMessageRef.current?.(message)
       } catch (e) {
         console.error('[WS] Failed to parse message:', e)
       }
@@ -47,7 +53,7 @@ export function useWebSocket(onMessage?: MessageHandler) {
     }
 
     wsRef.current = ws
-  }, [token, onMessage])
+  }, [token])
 
   useEffect(() => {
     connect()

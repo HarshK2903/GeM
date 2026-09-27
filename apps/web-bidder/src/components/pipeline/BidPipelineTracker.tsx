@@ -44,7 +44,7 @@ export function BidPipelineTracker({ bidId, mode, onComplete, completedData }: B
       
       if (stepIndex >= 0) {
         setResults(prev => ({ ...prev, [stepId]: msg.data?.result }));
-        setActiveStepIndex(Math.max(activeStepIndex, stepIndex + 1));
+        setActiveStepIndex(prev => Math.max(prev, stepIndex + 1));
       }
     }
     if (msg.type === 'pipeline.complete') {

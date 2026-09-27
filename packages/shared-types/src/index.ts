@@ -25,6 +25,41 @@ export interface TokenResponse {
 export type TenderType = 'open' | 'limited' | 'single' | 'two_part'
 export type TenderStatus = 'draft' | 'published' | 'evaluation' | 'awarded' | 'cancelled'
 
+export interface TechnicalCriterion {
+  criterion_type: string
+  criterion_description: string
+  criterion_documents: string
+}
+
+export interface RequiredDocument {
+  document_type: string  // 'Technical Bid' | 'Financial Bid' | 'Qualification Document'
+  document_name: string
+  is_mandatory: boolean
+}
+
+export interface TenderItem {
+  item_code: string
+  item_name: string
+  unit_of_measurement: string
+  quantity: number
+  estimated_unit_price?: number | null
+}
+
+export interface TenderGroup {
+  group_name: string
+  is_mandatory: boolean
+  all_items_mandatory: boolean
+  items: TenderItem[]
+}
+
+export interface DeliveryScheduleItem {
+  item_code: string
+  object_name: string
+  scheduled_quantity: number
+  delivery_location?: string | null
+  expected_delivery_date?: string | null
+}
+
 export interface Tender {
   id: string
   created_by: string
@@ -51,6 +86,77 @@ export interface Tender {
   created_at: string
   updated_at: string
   bid_count?: number
+  
+  // New fields for comprehensive tender information:
+  tender_denomination?: string | null  // 'Goods' | 'Services' | 'Works' | 'Consultancy'
+  location_name?: string | null
+  tender_scope?: string | null
+  commercial_bid_type?: string | null  // 'Itemwise' | 'Percentage' | 'Lumpsum'
+  evaluation_method?: string | null
+  price_list_type?: string | null  // 'Open' | 'Closed'
+  ecv_type?: string | null  // 'ECV' | 'Non-ECV'
+  currency_type?: string | null
+  itemwise_technical_evaluation?: boolean
+  highest_bidder_selection?: boolean
+  multiple_currencies_allowed?: boolean
+  file_number?: string | null
+  sample_remarks?: string | null
+  procurement_entity_type?: string | null
+
+  // Eligibility conditions (array of condition strings)
+  eligibility_conditions?: string[]
+
+  // Technical qualification criteria
+  technical_criteria?: TechnicalCriterion[]
+
+  // Documents required from bidder
+  required_documents_detailed?: RequiredDocument[]
+
+  // Tender items/groups
+  tender_groups?: TenderGroup[]
+
+  // Delivery schedule
+  delivery_schedule?: DeliveryScheduleItem[]
+
+  // Contact information
+  contact_person_name?: string | null
+  contact_designation?: string | null
+  contact_phone?: string | null
+  contact_mobile?: string | null
+  contact_email?: string | null
+  contact_address?: string | null
+
+  // Tender amount details
+  tender_fee?: number | null
+  advance_deposit_amount?: number | null
+  security_deposit_percentage?: number | null
+  performance_security_percentage?: number | null
+
+  // Tender schedule / important dates
+  bid_validity_period?: string | null
+  last_date_queries?: string | null
+  last_date_receipt?: string | null
+  technical_bid_open_date?: string | null
+  financial_bid_open_date?: string | null
+  pre_bid_meeting_date?: string | null
+  technical_bid_approver?: string | null
+  technical_bid_approved_date?: string | null
+  financial_bid_opened_by?: string | null
+  financial_bid_opened_date?: string | null
+  financial_bid_approver?: string | null
+  financial_bid_approved_date?: string | null
+  tender_awarded_date?: string | null
+
+  // Published user details
+  published_user_name?: string | null
+  published_user_post?: string | null
+
+  // Policy compliance
+  gem_registration_required?: boolean
+
+  // Additional
+  special_instructions?: string | null
+  terms_and_conditions?: string | null
 }
 
 export interface CreateTenderRequest {
@@ -68,6 +174,62 @@ export interface CreateTenderRequest {
   min_turnover?: number
   local_content_percentage?: number
   submission_deadline: string
+  
+  // New fields for comprehensive tender information:
+  tender_denomination?: string | null
+  location_name?: string | null
+  tender_scope?: string | null
+  commercial_bid_type?: string | null
+  evaluation_method?: string | null
+  price_list_type?: string | null
+  ecv_type?: string | null
+  currency_type?: string | null
+  itemwise_technical_evaluation?: boolean
+  highest_bidder_selection?: boolean
+  multiple_currencies_allowed?: boolean
+  file_number?: string | null
+  sample_remarks?: string | null
+  procurement_entity_type?: string | null
+
+  eligibility_conditions?: string[]
+  technical_criteria?: TechnicalCriterion[]
+  required_documents_detailed?: RequiredDocument[]
+  tender_groups?: TenderGroup[]
+  delivery_schedule?: DeliveryScheduleItem[]
+
+  contact_person_name?: string | null
+  contact_designation?: string | null
+  contact_phone?: string | null
+  contact_mobile?: string | null
+  contact_email?: string | null
+  contact_address?: string | null
+
+  tender_fee?: number | null
+  advance_deposit_amount?: number | null
+  security_deposit_percentage?: number | null
+  performance_security_percentage?: number | null
+
+  bid_validity_period?: string | null
+  last_date_queries?: string | null
+  last_date_receipt?: string | null
+  technical_bid_open_date?: string | null
+  financial_bid_open_date?: string | null
+  pre_bid_meeting_date?: string | null
+  technical_bid_approver?: string | null
+  technical_bid_approved_date?: string | null
+  financial_bid_opened_by?: string | null
+  financial_bid_opened_date?: string | null
+  financial_bid_approver?: string | null
+  financial_bid_approved_date?: string | null
+  tender_awarded_date?: string | null
+
+  published_user_name?: string | null
+  published_user_post?: string | null
+
+  gem_registration_required?: boolean
+
+  special_instructions?: string | null
+  terms_and_conditions?: string | null
 }
 
 // --- Bids ---

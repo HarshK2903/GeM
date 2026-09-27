@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft, FileText, Shield, Brain, Clock, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react'
-import { PipelineProgressView, PipelineStep } from '@/components/pipeline/PipelineProgressView'
+import { PipelineProgressView } from '@/components/pipeline/PipelineProgressView'
+import type { PipelineStep } from '@/components/pipeline/PipelineProgressView'
 
 interface ComplianceData {
   overall_score: number; eligibility_score: number; compliance_score: number;

@@ -70,7 +70,7 @@ export default function OfficerDashboard() {
         setStats({
           total_tenders: s.total_tenders ?? tenders.length,
           total_bids: s.total_bids ?? allBids.length,
-          pending_review: s.bids_by_status?.under_review ?? 0 + (s.bids_by_status?.submitted ?? 0),
+          pending_review: (s.bids_by_status?.under_review ?? 0) + (s.bids_by_status?.submitted ?? 0),
           approved_bids: s.bids_by_status?.approved ?? 0,
         })
       } catch {

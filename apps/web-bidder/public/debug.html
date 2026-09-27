@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head><title>GemVerify Diagnostic</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:20px">
+<h2>GemVerify Frontend Diagnostic</h2>
+<div id="log" style="white-space:pre-wrap"></div>
+<script type="module">
+const log = (msg) => { document.getElementById('log').innerHTML += msg + '\n'; };
+
+log('Testing module imports...\n');
+
+try {
+  log('1. Loading React...');
+  const React = await import('/node_modules/.vite/deps/react.js');
+  log('   ✅ React loaded: ' + typeof React.createElement);
+} catch(e) { log('   ❌ React FAILED: ' + e.message); }
+
+try {
+  log('2. Loading index.css...');
+  await import('/src/index.css');
+  log('   ✅ CSS loaded');
+} catch(e) { log('   ❌ CSS FAILED: ' + e.message); }
+
+try {
+  log('3. Loading authStore...');
+  const m = await import('/src/stores/authStore.ts');
+  log('   ✅ authStore loaded: ' + typeof m.useAuthStore);
+} catch(e) { log('   ❌ authStore FAILED: ' + e.message); }
+
+try {
+  log('4. Loading App...');
+  const m = await import('/src/App.tsx');
+  log('   ✅ App loaded: ' + typeof m.default);
+} catch(e) { log('   ❌ App FAILED: ' + e.message); }
+
+try {
+  log('5. Loading LandingPage...');
+  const m = await import('/src/pages/landing/LandingPage.tsx');
+  log('   ✅ LandingPage loaded: ' + typeof m.default);
+} catch(e) { log('   ❌ LandingPage FAILED: ' + e.message); }
+
+try {
+  log('6. Loading BidderDashboard...');
+  const m = await import('/src/pages/bidder/BidderDashboard.tsx');
+  log('   ✅ BidderDashboard loaded: ' + typeof m.default);
+} catch(e) { log('   ❌ BidderDashboard FAILED: ' + e.message); }
+
+try {
+  log('7. Loading BidDetail...');
+  const m = await import('/src/pages/bidder/BidDetail.tsx');
+  log('   ✅ BidDetail loaded: ' + typeof m.default);
+} catch(e) { log('   ❌ BidDetail FAILED: ' + e.message); }
+
+try {
+  log('8. Loading MyBids...');
+  const m = await import('/src/pages/bidder/MyBids.tsx');
+  log('   ✅ MyBids loaded: ' + typeof m.default);
+} catch(e) { log('   ❌ MyBids FAILED: ' + e.message); }
+
+try {
+  log('9. Loading main.tsx (full app mount)...');
+  const m = await import('/src/main.tsx');
+  log('   ✅ main.tsx executed');
+} catch(e) { log('   ❌ main.tsx FAILED: ' + e.message + '\n   Stack: ' + e.stack); }
+
+log('\n--- Done ---');
+log('If all show ✅, try Ctrl+Shift+R (hard refresh) on the main page.');
+log('If any show ❌, that is the broken module.');
+</script>
+</body>
+</html>

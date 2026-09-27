@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -81,7 +81,7 @@ export default function Login() {
           <Separator />
           <CardFooter className="justify-center pt-4">
             <p className="text-sm text-muted-foreground">
-              New officer? <a href="/register" className="text-[var(--gem-blue-light)] hover:underline font-medium">Create account</a>
+              New officer? <Link to="/register" className="text-[var(--gem-blue-light)] hover:underline font-medium">Create account</Link>
             </p>
           </CardFooter>
         </Card>

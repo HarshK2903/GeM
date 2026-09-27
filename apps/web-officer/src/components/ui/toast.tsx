@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { useToastStore, ToastMessage } from '@/stores/toastStore'
+import { useToastStore } from '@/stores/toastStore'
+import type { ToastMessage } from '@/stores/toastStore'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'

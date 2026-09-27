@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -80,7 +80,7 @@ export default function Register() {
           <Separator />
           <CardFooter className="justify-center pt-4">
             <p className="text-sm text-muted-foreground">
-              Already registered? <a href="/login" className="text-[var(--gem-blue-light)] hover:underline font-medium">Sign in</a>
+              Already registered? <Link to="/login" className="text-[var(--gem-blue-light)] hover:underline font-medium">Sign in</Link>
             </p>
           </CardFooter>
         </Card>
