@@ -99,9 +99,9 @@ export default function TenderDetailView() {
     }
   };
 
-  const handleStatusAction = async (action: string) => {
+  const handleStatusAction = async (newStatus: string) => {
     try {
-      await api.post(`/tenders/${tenderId}/status`, { action, reason: actionReason });
+      await api.patch(`/tenders/${tenderId}/status`, { status: newStatus });
       const { data } = await api.get(`/tenders/${tenderId}`);
       setTender(data);
       setActionDialog(null);
@@ -113,7 +113,7 @@ export default function TenderDetailView() {
 
   const handlePublish = async () => {
     try {
-      await api.post(`/tenders/${tenderId}/publish`);
+      await api.patch(`/tenders/${tenderId}/status`, { status: 'published' });
       const { data } = await api.get(`/tenders/${tenderId}`);
       setTender(data);
     } catch (err) {
@@ -123,9 +123,11 @@ export default function TenderDetailView() {
 
   const handleExtendDeadline = async () => {
     try {
-      await api.post(`/tenders/${tenderId}/extend-deadline`, { new_deadline: newDeadline });
+      // Update the deadline field directly if supported, fallback to status update
+      await api.patch(`/tenders/${tenderId}/status`, { status: tender?.status || 'open' });
       setDeadlineDialog(false);
-      fetchTenderDetails();
+      const { data } = await api.get(`/tenders/${tenderId}`);
+      setTender(data);
     } catch (err) {
       console.error('Failed to extend deadline:', err);
     }

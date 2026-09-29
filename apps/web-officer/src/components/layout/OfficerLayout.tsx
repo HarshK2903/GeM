@@ -1,14 +1,16 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { LayoutDashboard, FileText, ShieldCheck, Sparkles, BarChart3, ScrollText, Shield, LogOut, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, FileText, ShieldCheck, Sparkles, BarChart3, ScrollText, Shield, LogOut, ChevronRight, MessageSquare, Sun, Moon } from 'lucide-react'
 import { ToastContainer } from '@/components/ui/toast'
+import { useThemeStore } from '@/stores/themeStore'
 
 const navItems = [
   { to: '/officer', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/officer/tenders', icon: FileText, label: 'Tenders' },
   { to: '/officer/compliance', icon: ShieldCheck, label: 'Compliance' },
+  { to: '/officer/support', icon: MessageSquare, label: 'Support' },
   { to: '/officer/copilot', icon: Sparkles, label: 'Copilot' },
   { to: '/officer/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/officer/audit', icon: ScrollText, label: 'Audit trail' },
@@ -17,6 +19,8 @@ const navItems = [
 export default function OfficerLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { theme, toggleTheme } = useThemeStore()
 
   function handleLogout() {
     logout()
@@ -69,6 +73,10 @@ export default function OfficerLayout() {
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           </div>
+          <Button variant="ghost" size="sm" className="w-full justify-start mt-1 text-muted-foreground hover:text-foreground" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun size={14} className="mr-2" /> : <Moon size={14} className="mr-2" />}
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </Button>
           <Button variant="ghost" size="sm" className="w-full justify-start mt-1 text-muted-foreground hover:text-foreground" onClick={handleLogout}>
             <LogOut size={14} className="mr-2" /> Sign out
           </Button>
@@ -77,9 +85,13 @@ export default function OfficerLayout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-6 py-6">
+        {location.pathname.includes('/support') ? (
           <Outlet />
-        </div>
+        ) : (
+          <div className="max-w-6xl mx-auto px-6 py-6">
+            <Outlet />
+          </div>
+        )}
       </main>
     </div>
   )

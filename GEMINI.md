@@ -18,7 +18,7 @@ Modeled after Karnataka e-Procurement portal. Tenders have 10+ sections:
 General Details (20+ fields), Eligibility Conditions (23+), Technical Criteria table, Required Documents table, Tender Group Items table, Delivery Schedule table, Contact Info, Amount Details, Tender Schedule (10+ dates), Published User Details.
 Reference screenshots at: /home/bugulnoz/Pictures/Screenshots/Screenshot from 2026-09-27 18-*
 
-## Current Work Status (Updated Sept 28, 2026 2:50AM)
+## Current Work Status (Updated Sept 29, 2026 11:40PM)
 
 ### NEW: Multi-Page Tender Creation Wizard ✅ COMPLETE
 Route: `/officer/tenders/new/*` — 12 separate pages with sidebar stepper + floating AI chatbot
@@ -89,9 +89,33 @@ File: `apps/web-bidder/src/pages/bidder/TenderBrowse.tsx` (360 lines, rewritten)
 - Each card shows full tender info with badges, stats, deadline countdown
 - Links to dedicated /bidder/tenders/:id detail page
 
+### NEW: Support/Messaging System ✅ COMPLETE
+Full bidder↔officer communication system organized by tender.
+
+**Backend** — `apps/gateway/internal/handlers/support.go` (294 lines)
+- PostgreSQL `support_messages` table (auto-created)
+- POST /api/support/messages — send message
+- GET /api/support/messages?tender_id&with_user — get conversation
+- GET /api/support/conversations — list conversations
+- GET /api/support/unread-count — unread badge count
+- POST /api/support/messages/:id/read — mark as read
+
+**Officer Support Center** — `/officer/support` (979 lines)
+- 3-panel layout: Tender Selector + Conversations | Chat Window | Bidder Context
+- Quick actions: Request Document, Update Bid Status, Send Template
+- Bidder context panel: profile, bid summary, document status
+- Real-time polling, message bubbles, read receipts
+
+**Bidder Support Center** — `/bidder/support` (869 lines)
+- 3-panel layout: My Conversations | Chat Window | Submission Context
+- Document status tracker per tender
+- Important dates card
+- Tender overview + bid summary in context panel
+
 ### Bug Fixes Applied ✅
 - TenderManagement.tsx: Fixed tenders.map crash (API returns {items:[...]})
 - TenderManagement.tsx: Fixed View Details button (was missing onClick handler)
+- TenderDetailView.tsx: Fixed API handlers to use PATCH /tenders/:id/status
 - OfficerDashboard.tsx: Fixed operator precedence bug in pending_review
 - Auth pages (all 4): Replaced <a href> with React Router <Link to>
 - toast.tsx (both apps): Type-only import fix
@@ -99,6 +123,8 @@ File: `apps/web-bidder/src/pages/bidder/TenderBrowse.tsx` (360 lines, rewritten)
 - main.tsx (both apps): Custom ErrorBoundary
 - ComplianceDeepDive.tsx: Fixed type-only import
 - TenderDetail.tsx (bidder): Fixed @gemverify/shared-types import
+- TenderBrowse.tsx: Fixed status logic (published vs open vs expired)
+- tender.go: Backend now returns published+open tenders to bidders
 
 ### Backend Architecture (runs via scripts/dev.sh)
 - Go Gateway (port 8000): Fiber v2, PostgreSQL, Redis, MinIO, gRPC

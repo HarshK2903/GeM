@@ -1,19 +1,23 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { LayoutDashboard, FileText, Shield, LogOut, FileCheck } from 'lucide-react'
+import { LayoutDashboard, FileText, Shield, LogOut, FileCheck, MessageSquare, Sun, Moon } from 'lucide-react'
 import { ToastContainer } from '@/components/ui/toast'
+import { useThemeStore } from '@/stores/themeStore'
 
 const navItems = [
   { to: '/bidder', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/bidder/bids', icon: FileCheck, label: 'My bids' },
   { to: '/bidder/tenders', icon: FileText, label: 'Browse tenders' },
+  { to: '/bidder/support', icon: MessageSquare, label: 'Support' },
 ]
 
 export default function BidderLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { theme, toggleTheme } = useThemeStore()
 
   function handleLogout() {
     logout()
@@ -62,6 +66,10 @@ export default function BidderLayout() {
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           </div>
+          <Button variant="ghost" size="sm" className="w-full justify-start mt-1 text-muted-foreground hover:text-foreground" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun size={14} className="mr-2" /> : <Moon size={14} className="mr-2" />}
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </Button>
           <Button variant="ghost" size="sm" className="w-full justify-start mt-1 text-muted-foreground hover:text-foreground" onClick={handleLogout}>
             <LogOut size={14} className="mr-2" /> Sign out
           </Button>
@@ -69,9 +77,13 @@ export default function BidderLayout() {
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-6 py-6">
+        {location.pathname.includes('/support') ? (
           <Outlet />
-        </div>
+        ) : (
+          <div className="max-w-6xl mx-auto px-6 py-6">
+            <Outlet />
+          </div>
+        )}
       </main>
     </div>
   )

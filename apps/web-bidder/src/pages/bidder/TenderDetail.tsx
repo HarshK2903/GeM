@@ -122,6 +122,8 @@ export default function TenderDetail() {
   }
   
   const expired = tender?.submission_deadline ? new Date(tender.submission_deadline).getTime() < Date.now() : false
+  const isOpen = tender?.status?.toLowerCase() === 'open'
+  const canBid = isOpen && !expired
 
   const sections = [
     { id: 'sec-overview', label: 'Overview' },
@@ -188,8 +190,8 @@ export default function TenderDetail() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Badge variant={tender.status === 'open' ? 'default' : 'secondary'} className="capitalize">
-              {tender.status}
+            <Badge variant={tender.status === 'open' ? 'default' : tender.status === 'published' ? 'secondary' : 'outline'} className="capitalize">
+              {tender.status === 'open' ? 'Open for Bids' : tender.status}
             </Badge>
             <div className="flex items-center gap-1.5 text-sm font-medium bg-muted px-3 py-1.5 rounded-full">
               <Clock className="h-4 w-4 text-muted-foreground" />
@@ -522,15 +524,25 @@ export default function TenderDetail() {
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t shadow-lg p-4 transition-all duration-300">
         <div className="container mx-auto flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Ready to submit a bid for <span className="font-bold">{tender.reference_number || 'this tender'}</span>?</p>
-            <p className="text-xs text-muted-foreground">Complete document submission wizard with step-by-step verification.</p>
+            <p className="text-sm font-medium">
+              {canBid
+                ? <>Ready to submit a bid for <span className="font-bold">{tender.reference_number || 'this tender'}</span>?</>
+                : expired
+                  ? 'This tender has expired and is no longer accepting bids.'
+                  : !isOpen
+                    ? 'This tender is published but not yet open for bidding.'
+                    : 'Bidding is currently not available.'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {canBid ? 'Complete document submission wizard with step-by-step verification.' : 'Check back later or contact the procuring officer.'}
+            </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="lg" disabled={expired} onClick={() => setShowBidDialog(true)}>
+            <Button variant="outline" size="lg" disabled={!canBid} onClick={() => setShowBidDialog(true)}>
               Quick Upload
             </Button>
-            <Button size="lg" disabled={expired} onClick={() => navigate(`/bidder/tenders/${tenderId}/submit`)} className="px-8 shadow-md">
-              {expired ? 'Tender Expired' : 'Start Full Submission →'}
+            <Button size="lg" disabled={!canBid} onClick={() => navigate(`/bidder/tenders/${tenderId}/submit`)} className="px-8 shadow-md">
+              {expired ? 'Tender Expired' : !isOpen ? 'Not Yet Open' : 'Start Full Submission →'}
             </Button>
           </div>
         </div>

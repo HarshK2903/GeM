@@ -41,7 +41,10 @@ export default function TenderBrowse() {
   }, [])
 
   // Derived stats
-  const openCount = tenders.filter(t => t.status?.toLowerCase() === 'open' || !t.status).length
+  const openCount = tenders.filter(t => {
+    const s = t.status?.toLowerCase()
+    return s === 'open' || s === 'published' || !s
+  }).length
   const expiredCount = tenders.filter(t => {
     if (t.status?.toLowerCase() === 'expired') return true
     if (t.submission_deadline && new Date(t.submission_deadline).getTime() < Date.now()) return true
@@ -61,7 +64,7 @@ export default function TenderBrowse() {
     const status = t.status?.toLowerCase() || 'open'
 
     if (statusFilter === 'open') {
-      return status === 'open' && !isExpired
+      return (status === 'open' || status === 'published') && !isExpired
     }
     if (statusFilter === 'closed') {
       return status === 'closed'
@@ -263,7 +266,7 @@ export default function TenderBrowse() {
                       variant={resolvedStatus === 'open' ? 'default' : resolvedStatus === 'expired' ? 'destructive' : 'secondary'}
                       className="uppercase tracking-wider text-[10px]"
                     >
-                      {resolvedStatus}
+                      {resolvedStatus === 'open' ? 'open for bids' : resolvedStatus}
                     </Badge>
                   </div>
 
@@ -344,10 +347,10 @@ export default function TenderBrowse() {
                   </Button>
                   <Button 
                     className="w-full sm:w-auto"
-                    disabled={expired || resolvedStatus === 'closed'}
-                    onClick={() => navigate(`/bidder/tenders/${t.id}`)} // It says submit bid will be on detail page, but asks for button. Linking to detail is best.
+                    disabled={expired || resolvedStatus !== 'open'}
+                    onClick={() => navigate(`/bidder/tenders/${t.id}/submit`)}
                   >
-                    {expired ? 'Expired' : 'Submit Bid'}
+                    {expired ? 'Expired' : resolvedStatus === 'published' ? 'Not Yet Open' : resolvedStatus !== 'open' ? 'Closed' : 'Submit Bid'}
                   </Button>
                 </div>
               </Card>

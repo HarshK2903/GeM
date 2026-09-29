@@ -12,6 +12,7 @@ import CopilotChat from '@/pages/officer/CopilotChat'
 import AnalyticsDashboard from '@/pages/officer/AnalyticsDashboard'
 import AuditTrail from '@/pages/officer/AuditTrail'
 import TenderDetailView from '@/pages/officer/TenderDetailView'
+import SupportCenter from '@/pages/officer/SupportCenter'
 // Tender creation wizard
 import TenderCreateLayout from '@/pages/officer/tender-create/TenderCreateLayout'
 import Step01General from '@/pages/officer/tender-create/steps/Step01General'
@@ -71,6 +72,7 @@ export default function App() {
           </Route>
           <Route path="compliance" element={<ComplianceReview />} />
           <Route path="compliance/:bidId" element={<ComplianceDeepDive />} />
+          <Route path="support" element={<SupportCenter />} />
           <Route path="copilot" element={<CopilotChat />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="audit" element={<AuditTrail />} />

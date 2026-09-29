@@ -11,6 +11,7 @@ import TenderDetail from '@/pages/bidder/TenderDetail'
 import BidSubmission from '@/pages/bidder/BidSubmission'
 import BidDetail from '@/pages/bidder/BidDetail'
 import MyBids from '@/pages/bidder/MyBids'
+import SupportCenter from '@/pages/bidder/SupportCenter'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="tenders/:tenderId/submit" element={<BidSubmission />} />
           <Route path="bids" element={<MyBids />} />
           <Route path="bids/:bidId" element={<BidDetail />} />
+          <Route path="support" element={<SupportCenter />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

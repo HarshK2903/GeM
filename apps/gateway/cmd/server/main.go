@@ -140,6 +140,15 @@ func main() {
 	copilotHandler := handlers.NewCopilotHandler()
 	api.Post("/copilot/ask", copilotHandler.AskCopilot)
 
+	// Support/messaging routes
+	supportHandler := handlers.NewSupportHandler(cfg)
+	supportHandler.InitTable()
+	api.Post("/support/messages", supportHandler.SendMessage)
+	api.Get("/support/messages", supportHandler.GetMessages)
+	api.Get("/support/conversations", supportHandler.GetConversations)
+	api.Get("/support/unread-count", supportHandler.GetUnreadCount)
+	api.Post("/support/messages/:id/read", supportHandler.MarkRead)
+
 	// New Bid routes
 	api.Post("/bids/:id/withdraw", middleware.RequireRole("bidder"), bidHandler.WithdrawBid)
 	api.Get("/bids/all", middleware.RequireRole("officer", "admin"), bidHandler.ListAllBids)

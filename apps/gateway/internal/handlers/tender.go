@@ -53,7 +53,7 @@ func (h *TenderHandler) ListTenders(c *fiber.Ctx) error {
 				t.estimated_value, t.submission_deadline, t.created_at, u.full_name,
 				(SELECT COUNT(*) FROM bids WHERE bids.tender_id = t.id) as bid_count
 				FROM tenders t JOIN users u ON t.created_by = u.id
-				WHERE t.status = 'published' ORDER BY t.created_at DESC LIMIT $1 OFFSET $2`
+				WHERE t.status IN ('published', 'open') ORDER BY t.created_at DESC LIMIT $1 OFFSET $2`
 		args = []interface{}{perPage, offset}
 	} else {
 		query = `SELECT t.id, t.title, t.reference_number, t.tender_type, t.status, t.department,
