@@ -70,7 +70,7 @@ func RunMigrations(ctx context.Context) error {
 			reference_number VARCHAR(50) UNIQUE NOT NULL,
 			description TEXT NOT NULL,
 			tender_type VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (tender_type IN ('open', 'limited', 'single', 'two_part')),
-			status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'evaluation', 'awarded', 'cancelled')),
+			status VARCHAR(30) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'open', 'under_evaluation', 'evaluation', 'awarded', 'closed', 'suspended', 'cancelled')),
 			department VARCHAR(255) NOT NULL,
 			category VARCHAR(255),
 			estimated_value NUMERIC(15,2),
