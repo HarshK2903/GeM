@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleDashed, Loader2, PlayCircle, RefreshCw, XCircle } from 'lucide-react'
+import { CheckCircle2, CircleDashed, Loader2, XCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
@@ -15,11 +15,10 @@ export type PipelineStep = {
 interface PipelineProgressViewProps {
   steps: PipelineStep[]
   mode: 'live' | 'replay'
-  onReplay?: () => void
   overallScore?: number
 }
 
-export function PipelineProgressView({ steps, mode, onReplay, overallScore }: PipelineProgressViewProps) {
+export function PipelineProgressView({ steps, mode, overallScore }: PipelineProgressViewProps) {
   const [activeStepIndex, setActiveStepIndex] = useState(-1)
   
   // For replay mode animation
@@ -49,7 +48,7 @@ export function PipelineProgressView({ steps, mode, onReplay, overallScore }: Pi
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Verification Pipeline</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {mode === 'live' ? 'Real-time AI verification progress' : 'Historical verification run replay'}
+            Real-time AI verification progress
           </p>
         </div>
         
@@ -146,16 +145,6 @@ export function PipelineProgressView({ steps, mode, onReplay, overallScore }: Pi
         </div>
       </div>
 
-      {mode === 'replay' && activeStepIndex >= steps.length && (
-        <div className="mt-10 flex justify-center animate-in fade-in zoom-in">
-          <button 
-            onClick={onReplay}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-full text-sm font-medium hover:bg-secondary/80 transition-colors"
-          >
-            <RefreshCw size={16} /> Replay Animation
-          </button>
-        </div>
-      )}
     </Card>
   )
 }

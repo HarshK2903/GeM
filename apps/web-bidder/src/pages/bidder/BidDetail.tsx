@@ -98,15 +98,6 @@ export default function BidDetail() {
   const bidStatus = bidInfo?.status || 'submitted'
   const sc = statusConfig[bidStatus] || statusConfig.submitted
 
-  // Status timeline steps
-  const timelineSteps = [
-    { key: 'submitted', label: 'Submitted', icon: FileText },
-    { key: 'ai_processing', label: 'AI Processing', icon: BarChart3 },
-    { key: 'under_review', label: 'Under Review', icon: FileSearch },
-    { key: 'decision', label: bidStatus === 'approved' ? 'Approved' : bidStatus === 'rejected' ? 'Rejected' : 'Decision Pending', icon: bidStatus === 'approved' ? CheckCircle : bidStatus === 'rejected' ? XCircle : Clock },
-  ]
-  const stepOrder = ['submitted', 'ai_processing', 'under_review', 'approved', 'rejected', 'clarification']
-  const currentIndex = stepOrder.indexOf(bidStatus)
 
   return (
     <div className="space-y-6 animate-in">
@@ -137,33 +128,99 @@ export default function BidDetail() {
             <BidPipelineTracker bidId={bidId} mode="live" onComplete={() => fetchData()} />
           )}
 
-          {/* Status Timeline */}
+          {/* ─── Bidding Stage Pipeline ─── */}
           <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-sm font-medium">Bid Lifecycle</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                {timelineSteps.map((step, i) => {
-                  const isComplete = i <= Math.min(currentIndex, 2)
-                  const isCurrent = (i === currentIndex) || (i === 3 && currentIndex >= 3)
-                  return (
-                    <div key={step.key} className="flex-1 flex flex-col items-center gap-2 relative">
-                      {i > 0 && (
-                        <div className={`absolute top-4 -left-1/2 w-full h-0.5 ${isComplete ? 'bg-emerald-500' : 'bg-secondary'}`} />
-                      )}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 border-2 transition-all ${
-                        isCurrent ? 'border-[var(--gem-blue)] bg-[var(--gem-blue)]/20 text-[var(--gem-blue)]' :
-                        isComplete ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400' :
-                        'border-secondary bg-secondary text-muted-foreground'
-                      } ${isCurrent && bidStatus === 'ai_processing' ? 'animate-pulse' : ''}`}>
-                        <step.icon size={14} />
-                      </div>
-                      <span className={`text-xs ${isCurrent ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                        {step.label}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Tender Bidding Stage</CardTitle></CardHeader>
+            <CardContent className="pb-5">
+              {(() => {
+                const STAGES = [
+                  { key: 'document_submission', label: 'Document Submission', description: 'Upload required certificates & documents' },
+                  { key: 'document_verification', label: 'Document Verification', description: 'OCR extraction & registry cross-checks' },
+                  { key: 'technical_evaluation', label: 'Technical Evaluation', description: 'Technical bid scoring & compliance review' },
+                  { key: 'financial_evaluation', label: 'Financial Evaluation', description: 'Financial bids opened & L1 ranking' },
+                  { key: 'award_decision', label: 'Award Decision', description: 'Final approval & tender award' },
+                ]
+
+                // Map bid status to active stage index
+                let activeIdx = 0
+                const hasScore = compliance && compliance.overall_score != null && compliance.overall_score > 0
+                if (bidStatus === 'approved' || bidStatus === 'rejected') activeIdx = 4
+                else if (hasScore && (bidStatus === 'under_review')) activeIdx = 3
+                else if (hasScore) activeIdx = 2
+                else if (bidStatus === 'ai_processing') activeIdx = 1
+                else if (bidStatus === 'submitted') activeIdx = 1
+                else activeIdx = 0
+
+                return (
+                  <div className="relative flex items-start justify-between">
+                    {/* Track bg */}
+                    <div className="absolute top-[18px] left-[24px] right-[24px] h-[2px] bg-border z-0" />
+                    {/* Track filled */}
+                    <div className="absolute top-[18px] left-[24px] h-[2px] z-[1] transition-all duration-1000 ease-out"
+                      style={{
+                        width: `${(activeIdx / (STAGES.length - 1)) * 100}%`,
+                        maxWidth: 'calc(100% - 48px)',
+                        backgroundColor: bidStatus === 'rejected' ? 'oklch(0.60 0.20 25)' : 'oklch(0.65 0.18 150)'
+                      }}
+                    />
+
+                    {STAGES.map((stage, idx) => {
+                      const isCompleted = idx < activeIdx
+                      const isCurrent = idx === activeIdx
+                      const isRejectedFinal = isCurrent && bidStatus === 'rejected'
+
+                      return (
+                        <div key={stage.key} className="relative z-10 flex flex-col items-center text-center" style={{ width: `${100 / STAGES.length}%` }}>
+                          <div className={`
+                            w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-500
+                            ${isRejectedFinal
+                              ? 'bg-red-500/20 border-red-500 text-red-400'
+                              : isCompleted
+                                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                                : isCurrent
+                                  ? 'bg-blue-500/20 border-blue-500 text-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.25)]'
+                                  : 'bg-card border-border text-muted-foreground'
+                            }
+                          `}>
+                            {isRejectedFinal
+                              ? <XCircle size={16} />
+                              : isCompleted
+                                ? <CheckCircle size={16} />
+                                : isCurrent && bidStatus === 'approved'
+                                  ? <CheckCircle size={16} />
+                                  : <span className="text-xs font-bold">{idx + 1}</span>
+                            }
+                          </div>
+                          <p className={`text-[11px] font-medium mt-2 leading-tight transition-colors duration-300 ${
+                            isRejectedFinal ? 'text-red-400' : isCurrent ? 'text-blue-400' : isCompleted ? 'text-emerald-400' : 'text-muted-foreground'
+                          }`}>
+                            {stage.label}
+                          </p>
+                          {isCurrent && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 max-w-[130px] leading-tight">
+                              {isRejectedFinal ? 'Bid was not accepted' : bidStatus === 'approved' ? 'Bid has been approved!' : stage.description}
+                            </p>
+                          )}
+                          {isCurrent && !isRejectedFinal && bidStatus !== 'approved' && (
+                            <div className="mt-1.5 flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+                              </span>
+                              LIVE
+                            </div>
+                          )}
+                          {isCurrent && bidStatus === 'approved' && (
+                            <div className="mt-1.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                              ✓ AWARDED
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
 
