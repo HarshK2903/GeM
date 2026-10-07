@@ -43,7 +43,6 @@ export default function ComplianceDeepDive() {
   const [docs, setDocs] = useState<DocInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [showTrace, setShowTrace] = useState(false)
-  const [replayKey, setReplayKey] = useState(0)
   const [showJustification, setShowJustification] = useState(false)
   const [justification, setJustification] = useState('')
   const [pendingAction, setPendingAction] = useState<string>('')
@@ -107,10 +106,8 @@ export default function ComplianceDeepDive() {
       </div>
 
       <PipelineProgressView 
-        key={replayKey}
         steps={mockPipelineSteps} 
         mode="replay" 
-        onReplay={() => setReplayKey(k => k + 1)}
         overallScore={data.overall_score} 
       />
 

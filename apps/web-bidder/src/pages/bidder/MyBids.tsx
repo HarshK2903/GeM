@@ -6,7 +6,18 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
-import { FileCheck, Search, Clock, ArrowRight, Loader2, Filter } from 'lucide-react'
+import { FileCheck, Search, Clock, ArrowRight, Loader2, Filter, CheckCircle, XCircle } from 'lucide-react'
+
+const STAGE_LABELS = ['Doc Upload', 'Verification', 'Tech Eval', 'Financial Eval', 'Award']
+
+function getStageIdx(status: string, score: number | null): number {
+  const hasScore = score != null && score > 0
+  if (status === 'approved' || status === 'rejected') return 4
+  if (hasScore && status === 'under_review') return 3
+  if (hasScore) return 2
+  if (status === 'ai_processing' || status === 'submitted') return 1
+  return 0
+}
 
 const statusBadge: Record<string, { label: string; class: string }> = {
   submitted: { label: 'Submitted', class: 'status-info' },
@@ -150,6 +161,55 @@ export default function MyBids() {
                       </div>
                     </div>
                   )}
+
+                  {/* Compact stage indicator */}
+                  {(() => {
+                    const stageIdx = getStageIdx(bid.status, bid.compliance_score)
+                    const isRejected = bid.status === 'rejected'
+                    return (
+                      <div className="mt-3 pt-3 border-t border-border/40">
+                        <div className="flex items-center gap-0.5">
+                          {STAGE_LABELS.map((label, idx) => {
+                            const done = idx < stageIdx
+                            const active = idx === stageIdx
+                            const isLast = idx === 4 && active
+                            return (
+                              <div key={label} className="flex-1 flex flex-col items-center gap-1">
+                                <div className="w-full flex items-center">
+                                  {idx > 0 && (
+                                    <div className={`flex-1 h-[2px] transition-all duration-500 ${
+                                      done || active
+                                        ? isRejected && isLast ? 'bg-red-500/60' : 'bg-emerald-500/60'
+                                        : 'bg-border'
+                                    }`} />
+                                  )}
+                                  <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
+                                    isLast && isRejected
+                                      ? 'bg-red-500/20 border border-red-500 text-red-400'
+                                      : isLast && bid.status === 'approved'
+                                        ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-400'
+                                        : done
+                                          ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-400'
+                                          : active
+                                            ? 'bg-blue-500/20 border border-blue-500 text-blue-400'
+                                            : 'bg-card border border-border text-muted-foreground/40'
+                                  }`}>
+                                    {done ? <CheckCircle size={8} /> : isLast && isRejected ? <XCircle size={8} /> : isLast && bid.status === 'approved' ? <CheckCircle size={8} /> : null}
+                                  </div>
+                                  {idx < 4 && (
+                                    <div className={`flex-1 h-[2px] transition-all duration-500 ${done ? 'bg-emerald-500/60' : 'bg-border'}`} />
+                                  )}
+                                </div>
+                                <span className={`text-[8px] leading-tight ${active ? 'text-blue-400 font-medium' : done ? 'text-emerald-400/70' : 'text-muted-foreground/40'}`}>
+                                  {label}
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })()}
 
                   {/* Processing indicator */}
                   {isProcessing && (

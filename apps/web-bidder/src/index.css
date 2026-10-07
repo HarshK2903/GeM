@@ -154,17 +154,94 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  /* ─── Golden Ratio Typography (φ = 1.618) ─── */
+  :root {
+    --phi: 1.618;
+    --type-base: 1rem;                    /* 16px */
+    --type-sm: 0.618rem;                  /* ~9.9px   (1/φ) */
+    --type-xs: 0.382rem;                  /* ~6.1px   (1/φ²) */
+    --type-md: 1rem;                      /* 16px     base */
+    --type-lg: 1.618rem;                  /* ~25.9px  φ¹ */
+    --type-xl: 2.058rem;                  /* ~32.9px  φ × 1.272 */
+    --type-2xl: 2.618rem;                 /* ~41.9px  φ² */
+    --type-3xl: 4.236rem;                 /* ~67.8px  φ³ */
+
+    /* Golden line-heights */
+    --leading-golden: 1.618;
+    --leading-tight: 1.272;               /* √φ */
+    --leading-snug: 1.414;                /* midpoint */
+
+    /* Golden spacing unit */
+    --space-golden: 1.618rem;
+  }
+
+  html {
+    @apply font-sans;
+    font-size: 16px;
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-size: var(--type-base);
+    line-height: var(--leading-golden);
+    letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Headings — golden ratio modular scale */
+  h1, .text-3xl, .text-4xl {
+    font-family: var(--font-heading);
+    font-size: var(--type-2xl);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+
+  h2, .text-2xl {
+    font-family: var(--font-heading);
+    font-size: var(--type-xl);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+
+  h3, .text-xl {
+    font-family: var(--font-heading);
+    font-size: var(--type-lg);
+    line-height: var(--leading-snug);
+    letter-spacing: -0.015em;
+    font-weight: 600;
+  }
+
+  h4, .text-lg {
+    font-family: var(--font-heading);
+    font-size: 1.236rem;                  /* φ × 0.764 — between base and lg */
+    line-height: var(--leading-snug);
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+
+  /* Paragraphs & body */
+  p {
+    line-height: var(--leading-golden);
+  }
+
+  /* Small / caption text */
+  small, .text-xs {
+    font-size: 0.764rem;                  /* 1 / √φ ≈ 12.2px */
+    line-height: var(--leading-golden);
+  }
+
+  .text-sm {
+    font-size: 0.875rem;                  /* 14px — between xs and base */
+    line-height: var(--leading-golden);
+  }
+
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
-  }
-  html {
-    @apply font-sans;
-    scroll-behavior: smooth;
   }
 }
 
